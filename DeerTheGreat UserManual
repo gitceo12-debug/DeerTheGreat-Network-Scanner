@@ -1,0 +1,101 @@
+# DeerTheGreat — Command Cheat Sheet
+
+## Basic syntax
+```bash
+python3 main.py <target> [options]
+```
+Run this from inside the `~/deerthegreat` folder (or use the `deerthegreat` command if you set up the symlink).
+
+---
+
+## Target formats (required, first argument)
+
+| Format | Example | What it does |
+|---|---|---|
+| Single IP | `python3 main.py 192.168.1.1` | Scans one address |
+| Hostname | `python3 main.py example.com` | Resolves the domain to an IP, then scans it |
+| CIDR subnet | `python3 main.py 192.168.1.0/24` | Scans every host in that subnet (254 addresses) |
+| IP range | `python3 main.py 192.168.1.1-50` | Scans .1 through .50 |
+| Comma list | `python3 main.py 192.168.1.1,192.168.1.5,10.0.0.1` | Scans exactly those hosts |
+
+---
+
+## Flags
+
+### `-p, --ports` — which ports to scan
+```bash
+python3 main.py 192.168.1.1 -p 80              # just port 80
+python3 main.py 192.168.1.1 -p 22,80,443       # a specific list
+python3 main.py 192.168.1.1 -p 1-1000          # a range
+python3 main.py 192.168.1.1 -p top100          # default — 100 most common ports
+python3 main.py 192.168.1.1 -p all             # every port, 1–65535 (slow)
+```
+
+### `-c, --concurrency` — how many connections run at once (default 500)
+```bash
+python3 main.py 192.168.1.0/24 -c 1000   # faster, more aggressive
+python3 main.py 192.168.1.0/24 -c 100    # gentler, less likely to trip anything
+```
+
+### `-t, --timeout` — seconds to wait per connection attempt (default 1.0)
+```bash
+python3 main.py 192.168.1.1 -t 0.5   # faster scan, may miss slow-to-respond ports
+python3 main.py 192.168.1.1 -t 3     # slower but more reliable on laggy networks
+```
+
+### `--no-banner-grab` — skip reading service banners (faster, less info)
+```bash
+python3 main.py 192.168.1.0/24 -p all --no-banner-grab
+```
+
+### `-o, --output` — save results to a JSON file
+```bash
+python3 main.py 192.168.1.1 -o results.json
+cat results.json
+```
+
+### `--no-ui` — plain text, no colors/animation (good for logging or piping)
+```bash
+python3 main.py 192.168.1.1 --no-ui >> scan_log.txt
+```
+
+---
+
+## Combined examples
+
+```bash
+# Quick scan of your whole home network, common ports only
+python3 main.py 192.168.1.0/24
+
+# Fast, aggressive full-port scan of one machine
+python3 main.py 192.168.1.50 -p all -c 1000 -t 0.5
+
+# Careful, thorough scan — save to file
+python3 main.py 10.0.0.5 -p all -t 2 -o full_scan.json
+
+# Check if a web/ssh server is reachable
+python3 main.py mywebsite.com -p 22,80,443
+
+# Scan a range quietly, log to a file for later review
+python3 main.py 192.168.1.1-100 --no-ui -o range_scan.json
+```
+
+---
+
+## Help anytime
+```bash
+python3 main.py --help
+```
+
+---
+
+## Finding your own network range
+```bash
+ip a
+```
+Look for your local IP (e.g. `192.168.1.42`) — your subnet is everything before the last number, e.g. `192.168.1.0/24`.
+
+---
+
+## Responsible use
+Only scan networks/hosts you own or have explicit permission to test. Random IPs on the internet are not fair game — that can cause real legal trouble even if unintentional. Your own home network, personal devices, or boxes you control are all fine.
